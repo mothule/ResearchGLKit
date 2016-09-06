@@ -49,6 +49,9 @@ class GameViewController: GLKViewController {
         view.drawableDepthFormat = .Format24
 
         self.setupGL()
+        
+        self.view.layer.magnificationFilter = kCAFilterNearest
+        self.view.layer.minificationFilter = kCAFilterNearest
     }
 
     override func didReceiveMemoryWarning() {
@@ -77,6 +80,7 @@ class GameViewController: GLKViewController {
 
         // 深度テスト有効化
         glEnable(GLenum(GL_DEPTH_TEST))
+        
 
         glGenVertexArraysOES(1, &vertexArray)
         glBindVertexArrayOES(vertexArray)
@@ -87,8 +91,9 @@ class GameViewController: GLKViewController {
         
         do{
             
-//            let filePath = NSBundle.mainBundle().pathForResource("earth", ofType: "png")
-            textureInfo = try GLKTextureLoader.textureWithCGImage((UIImage(named:"sample3_inv")?.CGImage)!, options: nil)
+            let filePath = NSBundle.mainBundle().pathForResource("earth_inv", ofType: "png")
+            textureInfo = try GLKTextureLoader.textureWithContentsOfFile(filePath!, options: nil)
+//            textureInfo = try GLKTextureLoader.textureWithCGImage((UIImage(named:"sample3_inv")?.CGImage)!, options: nil)
         }catch{
             print(error)
         }
@@ -120,14 +125,14 @@ class GameViewController: GLKViewController {
 
     func update() {
         let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
-        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(100.0), aspect, 0.1, 100.0)
+        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(70.0), aspect, 0.01, 50.0)
 
         self.effect?.transform.projectionMatrix = projectionMatrix
         
         self.effect?.texture2d0.enabled = GLboolean(GL_TRUE)
         self.effect?.texture2d0.name = textureInfo!.name
 
-        let baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 0.0)
+        let baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.5, 0.0)
 //        baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, rotation, 0.0, 1.0, 0.0)
 
         // Compute the model view matrix for the object rendered with GLKit
@@ -140,7 +145,7 @@ class GameViewController: GLKViewController {
         self.effect?.transform.modelviewMatrix = modelViewMatrix
 
 
-        rotation += Float(self.timeSinceLastUpdate * Double(0.3))
+        rotation += Float(self.timeSinceLastUpdate * Double(0.15))
 //        rotation += Float(self.timeSinceLastUpdate * Double(rotationVelocityY))
 //        rotationVelocityY *= 0.8
 //        if fabsf(rotationVelocityY) <= 0.00001 {
@@ -191,8 +196,8 @@ class GameViewController: GLKViewController {
 
         let pi = GLfloat(M_PI)
         let pi2 = 2.0 * pi
-        let stackSize = 16
-        let vtxSize = 16
+        let stackSize = 32
+        let vtxSize = 32
         let maxRadius:GLfloat = 1.0
         
         var vtxes:[GLfloat] = []
@@ -241,14 +246,14 @@ class GameViewController: GLKViewController {
                 let v22:GLfloat = tv2
                 
                 
-                vtxes += [ x11, h1, y11,   u11, v11]
-                vtxes += [ x21, h2, y21,   u21, v21]
-                vtxes += [ x22, h2, y22,   u22, v22]
+                vtxes += [ x11, h1, y11, u11, v11]
+                vtxes += [ x21, h2, y21, u21, v21]
+                vtxes += [ x22, h2, y22, u22, v22]
                 print("v1(\(x11),\(h1),\(y11)) v2(\(x21),\(h2),\(y21)) v3(\(x22),\(h2),\(y22))")
 
-                vtxes += [ x11, h1, y11,   u11, v11]
-                vtxes += [ x22, h2, y22,   u22, v22]
-                vtxes += [ x12, h1, y12,   u12, v12]
+                vtxes += [ x11, h1, y11, u11, v11]
+                vtxes += [ x22, h2, y22, u22, v22]
+                vtxes += [ x12, h1, y12, u12, v12]
                 print("v4(\(x11),\(h1),\(y11)) v5(\(x22),\(h2),\(y22)) v6(\(x12),\(h1),\(y12))")
             }
         }
