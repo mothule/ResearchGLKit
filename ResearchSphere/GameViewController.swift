@@ -49,7 +49,7 @@ class GameViewController: GLKViewController {
         view.drawableDepthFormat = .Format24
 
         self.setupGL()
-        
+
         self.view.layer.magnificationFilter = kCAFilterNearest
         self.view.layer.minificationFilter = kCAFilterNearest
     }
@@ -69,7 +69,7 @@ class GameViewController: GLKViewController {
         }
     }
 
-    var textureInfo:GLKTextureInfo?
+    var textureInfo: GLKTextureInfo?
     func setupGL() {
         EAGLContext.setCurrentContext(self.context)
 
@@ -80,7 +80,7 @@ class GameViewController: GLKViewController {
 
         // 深度テスト有効化
         glEnable(GLenum(GL_DEPTH_TEST))
-        
+
 
         glGenVertexArraysOES(1, &vertexArray)
         glBindVertexArrayOES(vertexArray)
@@ -88,13 +88,13 @@ class GameViewController: GLKViewController {
         glGenBuffers(1, &vertexBuffer)
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
         glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(sizeof(GLfloat) * gSphereVertexData.count), &gSphereVertexData, GLenum(GL_STATIC_DRAW))
-        
-        do{
-            
-            let filePath = NSBundle.mainBundle().pathForResource("earth_inv", ofType: "png")
+
+        do {
+
+            let filePath = NSBundle.mainBundle().pathForResource("sample3", ofType: "JPG")
             textureInfo = try GLKTextureLoader.textureWithContentsOfFile(filePath!, options: nil)
 //            textureInfo = try GLKTextureLoader.textureWithCGImage((UIImage(named:"sample3_inv")?.CGImage)!, options: nil)
-        }catch{
+        } catch {
             print(error)
         }
 
@@ -125,10 +125,10 @@ class GameViewController: GLKViewController {
 
     func update() {
         let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
-        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(70.0), aspect, 0.01, 50.0)
+        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(50.0), aspect, 0.01, 50.0)
 
         self.effect?.transform.projectionMatrix = projectionMatrix
-        
+
         self.effect?.texture2d0.enabled = GLboolean(GL_TRUE)
         self.effect?.texture2d0.name = textureInfo!.name
 
@@ -145,13 +145,26 @@ class GameViewController: GLKViewController {
         self.effect?.transform.modelviewMatrix = modelViewMatrix
 
 
-        rotation += Float(self.timeSinceLastUpdate * Double(0.15))
-//        rotation += Float(self.timeSinceLastUpdate * Double(rotationVelocityY))
-//        rotationVelocityY *= 0.8
-//        if fabsf(rotationVelocityY) <= 0.00001 {
-//            rotationVelocityY = 0.0
-//        }
+//        rotation += Float(self.timeSinceLastUpdate * Double(0.15))
+        rotation += Float(self.timeSinceLastUpdate * Double(rotationVelocityY))
+        rotationVelocityY *= 0.8
+        if fabsf(rotationVelocityY) <= 0.00001 {
+            rotationVelocityY = 0.0
+        }
     }
+
+    override func glkView(view: GLKView, drawInRect rect: CGRect) {
+        glClearColor(1.0, 1.0, 1.0, 1.0)
+        glClear(GLbitfield(GL_COLOR_BUFFER_BIT) | GLbitfield(GL_DEPTH_BUFFER_BIT))
+
+        glBindVertexArrayOES(vertexArray)
+
+        // Render the object with GLKit
+        self.effect?.prepareToDraw()
+
+        glDrawArrays(GLenum(GL_TRIANGLES), 0, GLsizei(gSphereVertexData.count/5))
+    }
+
 
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         rotationVelocityY = 0.0
@@ -180,33 +193,16 @@ class GameViewController: GLKViewController {
         rotationVelocityY += distance * 0.1 * (touchPrevPoint.x - pos.x < 0.0 ? -1.0 : 1.0)
     }
 
-    override func glkView(view: GLKView, drawInRect rect: CGRect) {
-        glClearColor(1.0, 1.0, 1.0, 1.0)
-        glClear(GLbitfield(GL_COLOR_BUFFER_BIT) | GLbitfield(GL_DEPTH_BUFFER_BIT))
-
-        glBindVertexArrayOES(vertexArray)
-
-        // Render the object with GLKit
-        self.effect?.prepareToDraw()
-
-        glDrawArrays(GLenum(GL_TRIANGLES), 0, GLsizei(gSphereVertexData.count/5))
-    }
-
     class func getSphere() -> [GLfloat] {
 
         let pi = GLfloat(M_PI)
         let pi2 = 2.0 * pi
         let stackSize = 32
         let vtxSize = 32
-        let maxRadius:GLfloat = 1.0
-        
-        var vtxes:[GLfloat] = []
-        
-//        let texWidth:GLfloat = 512
-//        let texHeight:GLfloat = 256
-        
-        
-        
+        let maxRadius: GLfloat = 1.0
+
+        var vtxes: [GLfloat] = []
+
         for stackIdx in 0..<stackSize {
             let r1      =  sinf(pi * (GLfloat(stackIdx    ) / GLfloat(stackSize)))
             let h1      = -cosf(pi * (GLfloat(stackIdx    ) / GLfloat(stackSize)))
@@ -215,37 +211,37 @@ class GameViewController: GLKViewController {
             let tv1     =  sinf(pi/2 * (GLfloat(stackIdx  ) / GLfloat(stackSize)))
             let tv2     =  sinf(pi/2 * (GLfloat(stackIdx+1) / GLfloat(stackSize)))
             print("現階層:\(stackIdx) 現階層の高さ:\(h1) 現階層の中心からの距離:\(r1) 次階層の高さ:\(h2) 次階層の中心からの距離:\(r2)")
-            
+
             let radius1 = maxRadius * r1
             let radius2 = maxRadius * r2
-            
+
             for vtxIdx in 0..<vtxSize {
                 let theta1 = pi2 * (GLfloat(vtxIdx    ) / GLfloat(vtxSize))
                 let theta2 = pi2 * (GLfloat(vtxIdx + 1) / GLfloat(vtxSize))
                 let tu1 = sinf(pi/2 * (GLfloat(vtxIdx) / GLfloat(vtxSize)))
                 let tu2 = sinf(pi/2 * (GLfloat(vtxIdx+1) / GLfloat(vtxSize)))
-                
-                let x11:GLfloat = radius1 * cosf(theta1)
-                let y11:GLfloat = radius1 * sinf(theta1)
-                let u11:GLfloat = tu1
-                let v11:GLfloat = tv1
-                
-                let x12:GLfloat = radius1 * cosf(theta2)
-                let y12:GLfloat = radius1 * sinf(theta2)
-                let u12:GLfloat = tu2
-                let v12:GLfloat = tv1
-                
-                let x21:GLfloat = radius2 * cosf(theta1)
-                let y21:GLfloat = radius2 * sinf(theta1)
-                let u21:GLfloat = tu1
-                let v21:GLfloat = tv2
-                
-                let x22:GLfloat = radius2 * cosf(theta2)
-                let y22:GLfloat = radius2 * sinf(theta2)
-                let u22:GLfloat = tu2
-                let v22:GLfloat = tv2
-                
-                
+
+                let x11: GLfloat = radius1 * cosf(theta1)
+                let y11: GLfloat = radius1 * sinf(theta1)
+                let u11: GLfloat = tu1
+                let v11: GLfloat = tv1
+
+                let x12: GLfloat = radius1 * cosf(theta2)
+                let y12: GLfloat = radius1 * sinf(theta2)
+                let u12: GLfloat = tu2
+                let v12: GLfloat = tv1
+
+                let x21: GLfloat = radius2 * cosf(theta1)
+                let y21: GLfloat = radius2 * sinf(theta1)
+                let u21: GLfloat = tu1
+                let v21: GLfloat = tv2
+
+                let x22: GLfloat = radius2 * cosf(theta2)
+                let y22: GLfloat = radius2 * sinf(theta2)
+                let u22: GLfloat = tu2
+                let v22: GLfloat = tv2
+
+
                 vtxes += [ x11, h1, y11, u11, v11]
                 vtxes += [ x21, h2, y21, u21, v21]
                 vtxes += [ x22, h2, y22, u22, v22]
@@ -259,30 +255,30 @@ class GameViewController: GLKViewController {
         }
         return vtxes
 
-        
-        return [
-            -1.0, -1.0, -1.0, 0, 0, 1,
-            -1.0,  1.0, -1.0, 0, 0, 1,
-             1.0,  1.0, -1.0, 0, 0, 1,
 
-             1.0,  1.0, -1.0, 0, 0, 1,
-             1.0, -1.0, -1.0, 0, 0, 1,
-            -1.0, -1.0, -1.0, 0, 0, 1,
-        ]
+//        return [
+//            -1.0, -1.0, -1.0, 0, 0, 1,
+//            -1.0,  1.0, -1.0, 0, 0, 1,
+//             1.0,  1.0, -1.0, 0, 0, 1,
+//
+//             1.0,  1.0, -1.0, 0, 0, 1,
+//             1.0, -1.0, -1.0, 0, 0, 1,
+//            -1.0, -1.0, -1.0, 0, 0, 1,
+//        ]
     }
 }
 
-var gSphereVertexData:[GLfloat] = GameViewController.getSphere()
+var gSphereVertexData: [GLfloat] = GameViewController.getSphere()
 
 var gCubeVertexDataInv: [GLfloat] = [
     // Data layout for each line below is:
     // positionX, positionY, positionZ,     normalX, normalY, normalZ,
     0.5, -0.5, -0.5, -1.0, 0.0, 0.0,
-    0.5,  0.5, -0.5, -1.0, 0.0, 0.0,
-    0.5, -0.5,  0.5, -1.0, 0.0, 0.0,
-    0.5, -0.5,  0.5, -1.0, 0.0, 0.0,
-    0.5,  0.5, -0.5, -1.0, 0.0, 0.0,
-    0.5,  0.5,  0.5, -1.0, 0.0, 0.0,
+    0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
+    0.5, -0.5, 0.5, -1.0, 0.0, 0.0,
+    0.5, -0.5, 0.5, -1.0, 0.0, 0.0,
+    0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
+    0.5, 0.5, 0.5, -1.0, 0.0, 0.0,
 
     0.5, 0.5, -0.5, 0.0, -1.0, 0.0,
     -0.5, 0.5, -0.5, 0.0, -1.0, 0.0,

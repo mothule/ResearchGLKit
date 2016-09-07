@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2F2EE6141D7FABE40006C41C /* sample4.JPG in Resources */ = {isa = PBXBuildFile; fileRef = 2F2EE6121D7FABE40006C41C /* sample4.JPG */; };
+		2F2EE6151D7FABE40006C41C /* sample3.JPG in Resources */ = {isa = PBXBuildFile; fileRef = 2F2EE6131D7FABE40006C41C /* sample3.JPG */; };
 		2F6C667F1D7E6A7000E88A57 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F6C667E1D7E6A7000E88A57 /* AppDelegate.swift */; };
 		2F6C66811D7E6A7000E88A57 /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 2F6C66801D7E6A7000E88A57 /* Shader.fsh */; };
 		2F6C66831D7E6A7000E88A57 /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = 2F6C66821D7E6A7000E88A57 /* Shader.vsh */; };
@@ -18,6 +20,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2F2EE6121D7FABE40006C41C /* sample4.JPG */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = sample4.JPG; sourceTree = "<group>"; };
+		2F2EE6131D7FABE40006C41C /* sample3.JPG */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = sample3.JPG; sourceTree = "<group>"; };
 		2F6C667B1D7E6A6F00E88A57 /* ResearchSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ResearchSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F6C667E1D7E6A7000E88A57 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2F6C66801D7E6A7000E88A57 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
@@ -68,6 +72,8 @@
 				2F6C66891D7E6A7000E88A57 /* Assets.xcassets */,
 				54987B531D7F4D2700886262 /* earth_inv.png */,
 				2F6C668B1D7E6A7000E88A57 /* LaunchScreen.storyboard */,
+				2F2EE6121D7FABE40006C41C /* sample4.JPG */,
+				2F2EE6131D7FABE40006C41C /* sample3.JPG */,
 				2F6C668E1D7E6A7000E88A57 /* Info.plist */,
 			);
 			path = ResearchSphere;
@@ -133,9 +139,11 @@
 			files = (
 				2F6C66881D7E6A7000E88A57 /* Main.storyboard in Resources */,
 				2F6C66831D7E6A7000E88A57 /* Shader.vsh in Resources */,
+				2F2EE6141D7FABE40006C41C /* sample4.JPG in Resources */,
 				2F6C668A1D7E6A7000E88A57 /* Assets.xcassets in Resources */,
 				2F6C668D1D7E6A7000E88A57 /* LaunchScreen.storyboard in Resources */,
 				54987B541D7F4D2700886262 /* earth_inv.png in Resources */,
+				2F2EE6151D7FABE40006C41C /* sample3.JPG in Resources */,
 				2F6C66811D7E6A7000E88A57 /* Shader.fsh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
