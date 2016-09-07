@@ -15,9 +15,11 @@ func BUFFER_OFFSET(i: Int) -> UnsafePointer<Void> {
 }
 
 class GameViewController: GLKViewController {
-    var rotation: Float = 0.0
-    var rotationVelocityY: Float = 0.0
-    var touchBeginPoint: CGPoint = CGPoint.zero
+    var rotationYaw: Float = 0.0
+    var rotationPitch: Float = 0.0
+    var rotationVelocityYaw: Float = 0.0
+    var rotationVelocityPitch: Float = 0.0
+
     var touchPrevPoint: CGPoint = CGPoint.zero
 
     var vertexArray: GLuint = 0
@@ -47,6 +49,7 @@ class GameViewController: GLKViewController {
         let view = self.view as! GLKView
         view.context = self.context!
         view.drawableDepthFormat = .Format24
+        
 
         self.setupGL()
 
@@ -74,13 +77,10 @@ class GameViewController: GLKViewController {
         EAGLContext.setCurrentContext(self.context)
 
         self.effect = GLKBaseEffect()
-//        self.effect!.light0.enabled = GLboolean(GL_TRUE)
-//        self.effect!.light0.diffuseColor = GLKVector4Make(1.0, 1.0, 1.0, 1.0)
         self.effect!.useConstantColor = GLboolean(GL_TRUE)
 
-        // 深度テスト有効化
-        glEnable(GLenum(GL_DEPTH_TEST))
-
+//        glEnable(GLenum(GL_DEPTH_TEST))
+//        glEnable(GLenum(GL_DITHER))
 
         glGenVertexArraysOES(1, &vertexArray)
         glBindVertexArrayOES(vertexArray)
@@ -90,7 +90,6 @@ class GameViewController: GLKViewController {
         glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(sizeof(GLfloat) * gSphereVertexData.count), &gSphereVertexData, GLenum(GL_STATIC_DRAW))
 
         do {
-
             let filePath = NSBundle.mainBundle().pathForResource("sample3", ofType: "JPG")
             textureInfo = try GLKTextureLoader.textureWithContentsOfFile(filePath!, options: nil)
 //            textureInfo = try GLKTextureLoader.textureWithCGImage((UIImage(named:"sample3_inv")?.CGImage)!, options: nil)
@@ -102,9 +101,6 @@ class GameViewController: GLKViewController {
         // XYZ座標
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue))
         glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), Int32(sizeof(GLfloat) * 5), BUFFER_OFFSET(0))
-//        // 法線
-//        glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Normal.rawValue))
-//        glVertexAttribPointer(GLuint(GLKVertexAttrib.Normal.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), Int32(sizeof(GLfloat) * 8), BUFFER_OFFSET(12))
         // 2Dテクスチャ
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.TexCoord0.rawValue))
         glVertexAttribPointer(GLuint(GLKVertexAttrib.TexCoord0.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), Int32(sizeof(GLfloat)*5), BUFFER_OFFSET(12))
@@ -131,25 +127,31 @@ class GameViewController: GLKViewController {
 
         self.effect?.texture2d0.enabled = GLboolean(GL_TRUE)
         self.effect?.texture2d0.name = textureInfo!.name
-
-        let baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.5, 0.0)
-//        baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, rotation, 0.0, 1.0, 0.0)
-
+        
+        var baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 0.0)
+        baseModelViewMatrix = GLKMatrix4RotateWithVector3(baseModelViewMatrix, rotationYaw, GLKVector3Make(0,1,0))
+        baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, rotationPitch, cosf(rotationYaw), 0.0, sinf(rotationYaw) )
+        
         // Compute the model view matrix for the object rendered with GLKit
 //        var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, -5.0)
         var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 0.0)
-        modelViewMatrix = GLKMatrix4Scale(modelViewMatrix, 1.0, 1.0, 1.0)
-        modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotation, 0.0, 1.0, 0.0)
+//        modelViewMatrix = GLKMatrix4Scale(modelViewMatrix, 1.0, 1.0, 1.0)
+//        modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotation, 0.0, 1.0, 0.0)
         modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix)
-
         self.effect?.transform.modelviewMatrix = modelViewMatrix
 
 
-//        rotation += Float(self.timeSinceLastUpdate * Double(0.15))
-        rotation += Float(self.timeSinceLastUpdate * Double(rotationVelocityY))
-        rotationVelocityY *= 0.8
-        if fabsf(rotationVelocityY) <= 0.00001 {
-            rotationVelocityY = 0.0
+        rotationYaw += Float(self.timeSinceLastUpdate * Double(0.15))
+        rotationYaw += Float(self.timeSinceLastUpdate * Double(rotationVelocityYaw))
+        rotationPitch += Float(self.timeSinceLastUpdate * Double(rotationVelocityPitch))
+        
+        rotationVelocityYaw *= 0.9
+        rotationVelocityPitch *= 0.9
+        if fabsf(rotationVelocityYaw) <= 0.0000001 {
+            rotationVelocityYaw = 0.0
+        }
+        if fabsf(rotationVelocityPitch) <= 0.0000001 {
+            rotationVelocityPitch = 0.0
         }
     }
 
@@ -162,23 +164,35 @@ class GameViewController: GLKViewController {
         // Render the object with GLKit
         self.effect?.prepareToDraw()
 
+//        glDrawArrays(GLenum(GL_LINES), 0, GLsizei(gSphereVertexData.count/5))
         glDrawArrays(GLenum(GL_TRIANGLES), 0, GLsizei(gSphereVertexData.count/5))
     }
 
 
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        rotationVelocityY = 0.0
+        rotationVelocityYaw = 0.0
+        rotationVelocityPitch = 0.0
 
         let touch: UITouch = touches.first! as UITouch
         let pos: CGPoint = touch.locationInView(self.view)
-        touchBeginPoint = pos
         touchPrevPoint = pos
     }
+    
     override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
         let touch: UITouch = touches.first! as UITouch
         let pos: CGPoint = touch.locationInView(self.view)
-        let distance = sqrtf( Pow(Float(pos.x) - Float(touchPrevPoint.x)))
-        rotationVelocityY += distance * 0.02 * (touchPrevPoint.x - pos.x < 0.0 ? -1.0 : 1.0)
+        
+        
+        let distanceX = sqrtf( Pow(Float(pos.x - touchPrevPoint.x) ))
+        let distanceY = sqrtf( Pow(Float(pos.y - touchPrevPoint.y) ))
+        
+        
+        let radianX = atanf((distanceX/2.0)/50.0) * 2.0
+        rotationVelocityYaw += radianX * (touchPrevPoint.x - pos.x < 0.0 ? -1.0 : 1.0)
+
+        let radianY = atanf((distanceY/2.0)/50.0) * 2.0
+        rotationVelocityPitch += radianY * (touchPrevPoint.y - pos.y < 0.0 ? -1.0 : 1.0)
+        
         touchPrevPoint = pos
     }
 
@@ -187,10 +201,7 @@ class GameViewController: GLKViewController {
     }
 
     override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        let touch: UITouch = touches.first! as UITouch
-        let pos: CGPoint = touch.locationInView(self.view)
-        let distance = sqrtf( Pow(Float(pos.x) - Float(touchPrevPoint.x)))
-        rotationVelocityY += distance * 0.1 * (touchPrevPoint.x - pos.x < 0.0 ? -1.0 : 1.0)
+
     }
 
     class func getSphere() -> [GLfloat] {
@@ -208,8 +219,8 @@ class GameViewController: GLKViewController {
             let h1      = -cosf(pi * (GLfloat(stackIdx    ) / GLfloat(stackSize)))
             let r2      =  sinf(pi * (GLfloat(stackIdx + 1) / GLfloat(stackSize)))
             let h2      = -cosf(pi * (GLfloat(stackIdx + 1) / GLfloat(stackSize)))
-            let tv1     =  sinf(pi/2 * (GLfloat(stackIdx  ) / GLfloat(stackSize)))
-            let tv2     =  sinf(pi/2 * (GLfloat(stackIdx+1) / GLfloat(stackSize)))
+            let tv1     =  sinf(pi/2.0 * (GLfloat(stackIdx  ) / GLfloat(stackSize)))
+            let tv2     =  sinf(pi/2.0 * (GLfloat(stackIdx+1) / GLfloat(stackSize)))
             print("現階層:\(stackIdx) 現階層の高さ:\(h1) 現階層の中心からの距離:\(r1) 次階層の高さ:\(h2) 次階層の中心からの距離:\(r2)")
 
             let radius1 = maxRadius * r1
@@ -218,8 +229,8 @@ class GameViewController: GLKViewController {
             for vtxIdx in 0..<vtxSize {
                 let theta1 = pi2 * (GLfloat(vtxIdx    ) / GLfloat(vtxSize))
                 let theta2 = pi2 * (GLfloat(vtxIdx + 1) / GLfloat(vtxSize))
-                let tu1 = sinf(pi/2 * (GLfloat(vtxIdx) / GLfloat(vtxSize)))
-                let tu2 = sinf(pi/2 * (GLfloat(vtxIdx+1) / GLfloat(vtxSize)))
+                let tu1 = sinf(pi/2.0 * (GLfloat(vtxIdx) / GLfloat(vtxSize)))
+                let tu2 = sinf(pi/2.0 * (GLfloat(vtxIdx+1) / GLfloat(vtxSize)))
 
                 let x11: GLfloat = radius1 * cosf(theta1)
                 let y11: GLfloat = radius1 * sinf(theta1)
