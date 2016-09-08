@@ -2,7 +2,7 @@
 //  GameViewController.swift
 //  ResearchSphere
 //
-//  Created by 川上 基樹 on 2016/09/06.
+//  Created by mothule on 2016/09/06.
 //  Copyright © 2016年 mothule. All rights reserved.
 //
 
@@ -27,6 +27,9 @@ class GameViewController: GLKViewController {
 
     var context: EAGLContext? = nil
     var effect: GLKBaseEffect? = nil
+    
+    var textureInfo: GLKTextureInfo?
+
 
 
     deinit {
@@ -72,15 +75,11 @@ class GameViewController: GLKViewController {
         }
     }
 
-    var textureInfo: GLKTextureInfo?
     func setupGL() {
         EAGLContext.setCurrentContext(self.context)
 
         self.effect = GLKBaseEffect()
         self.effect!.useConstantColor = GLboolean(GL_TRUE)
-
-//        glEnable(GLenum(GL_DEPTH_TEST))
-//        glEnable(GLenum(GL_DITHER))
 
         glGenVertexArraysOES(1, &vertexArray)
         glBindVertexArrayOES(vertexArray)
@@ -90,20 +89,21 @@ class GameViewController: GLKViewController {
         glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(sizeof(GLfloat) * gSphereVertexData.count), &gSphereVertexData, GLenum(GL_STATIC_DRAW))
 
         do {
-            let filePath = NSBundle.mainBundle().pathForResource("sample3", ofType: "JPG")
-            textureInfo = try GLKTextureLoader.textureWithContentsOfFile(filePath!, options: nil)
-//            textureInfo = try GLKTextureLoader.textureWithCGImage((UIImage(named:"sample3_inv")?.CGImage)!, options: nil)
+//            let filePath = NSBundle.mainBundle().pathForResource("sample3", ofType: "JPG")
+//            textureInfo = try GLKTextureLoader.textureWithContentsOfFile(filePath!, options: [GLKTextureLoaderOriginBottomLeft:NSNumber(bool:true)])
+            textureInfo = try GLKTextureLoader.textureWithCGImage((UIImage(named:"sample3")?.CGImage)!, options: [GLKTextureLoaderOriginBottomLeft:NSNumber(bool:true)])
         } catch {
             print(error)
         }
 
         // 頂点情報の設定
+        let strideSize:Int32 = Int32(sizeof(GLfloat) * 5)
         // XYZ座標
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue))
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), Int32(sizeof(GLfloat) * 5), BUFFER_OFFSET(0))
+        glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), strideSize, BUFFER_OFFSET(0))
         // 2Dテクスチャ
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.TexCoord0.rawValue))
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.TexCoord0.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), Int32(sizeof(GLfloat)*5), BUFFER_OFFSET(12))
+        glVertexAttribPointer(GLuint(GLKVertexAttrib.TexCoord0.rawValue), 2, GLenum(GL_FLOAT), GLboolean(GL_FALSE), strideSize, BUFFER_OFFSET(12))
 
         glBindVertexArrayOES(0)
     }
@@ -111,6 +111,10 @@ class GameViewController: GLKViewController {
     func tearDownGL() {
         EAGLContext.setCurrentContext(self.context)
 
+        if let _ = self.textureInfo {
+            var name:GLuint = self.textureInfo!.name
+            glDeleteTextures(1, &name)
+        }
         glDeleteBuffers(1, &vertexBuffer)
         glDeleteVertexArraysOES(1, &vertexArray)
 
@@ -133,15 +137,14 @@ class GameViewController: GLKViewController {
         baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, rotationPitch, cosf(rotationYaw), 0.0, sinf(rotationYaw) )
         
         // Compute the model view matrix for the object rendered with GLKit
-//        var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, -5.0)
         var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 0.0)
 //        modelViewMatrix = GLKMatrix4Scale(modelViewMatrix, 1.0, 1.0, 1.0)
-//        modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotation, 0.0, 1.0, 0.0)
         modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix)
         self.effect?.transform.modelviewMatrix = modelViewMatrix
 
 
-        rotationYaw += Float(self.timeSinceLastUpdate * Double(0.15))
+        
+        rotationYaw += Float(self.timeSinceLastUpdate * Double(0.1))
         rotationYaw += Float(self.timeSinceLastUpdate * Double(rotationVelocityYaw))
         rotationPitch += Float(self.timeSinceLastUpdate * Double(rotationVelocityPitch))
         
@@ -169,6 +172,7 @@ class GameViewController: GLKViewController {
     }
 
 
+    
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         rotationVelocityYaw = 0.0
         rotationVelocityPitch = 0.0
@@ -252,16 +256,17 @@ class GameViewController: GLKViewController {
                 let u22: GLfloat = tu2
                 let v22: GLfloat = tv2
 
-
+                // 最初のuと最後のuで頂点間のu幅が違う
+                // は調べてない
                 vtxes += [ x11, h1, y11, u11, v11]
                 vtxes += [ x21, h2, y21, u21, v21]
                 vtxes += [ x22, h2, y22, u22, v22]
-                print("v1(\(x11),\(h1),\(y11)) v2(\(x21),\(h2),\(y21)) v3(\(x22),\(h2),\(y22))")
+                print("v1(\(x11),\(h1),\(y11), \(u11),\(v11)) v2(\(x21),\(h2),\(y21), \(u21),\(v21)) v3(\(x22),\(h2),\(y22), \(u22),\(v22))")
 
                 vtxes += [ x11, h1, y11, u11, v11]
                 vtxes += [ x22, h2, y22, u22, v22]
                 vtxes += [ x12, h1, y12, u12, v12]
-                print("v4(\(x11),\(h1),\(y11)) v5(\(x22),\(h2),\(y22)) v6(\(x12),\(h1),\(y12))")
+                print("v4(\(x11),\(h1),\(y11), \(u11),\(v11)) v5(\(x22),\(h2),\(y22), \(u22),\(v22)) v6(\(x12),\(h1),\(y12), \(u12),\(v12))")
             }
         }
         return vtxes
@@ -280,96 +285,3 @@ class GameViewController: GLKViewController {
 }
 
 var gSphereVertexData: [GLfloat] = GameViewController.getSphere()
-
-var gCubeVertexDataInv: [GLfloat] = [
-    // Data layout for each line below is:
-    // positionX, positionY, positionZ,     normalX, normalY, normalZ,
-    0.5, -0.5, -0.5, -1.0, 0.0, 0.0,
-    0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
-    0.5, -0.5, 0.5, -1.0, 0.0, 0.0,
-    0.5, -0.5, 0.5, -1.0, 0.0, 0.0,
-    0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
-    0.5, 0.5, 0.5, -1.0, 0.0, 0.0,
-
-    0.5, 0.5, -0.5, 0.0, -1.0, 0.0,
-    -0.5, 0.5, -0.5, 0.0, -1.0, 0.0,
-    0.5, 0.5, 0.5, 0.0, -1.0, 0.0,
-    0.5, 0.5, 0.5, 0.0, -1.0, 0.0,
-    -0.5, 0.5, -0.5, 0.0, -1.0, 0.0,
-    -0.5, 0.5, 0.5, 0.0, -1.0, 0.0,
-
-    -0.5, 0.5, -0.5, 1.0, 0.0, 0.0,
-    -0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
-    -0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
-    -0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
-    -0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
-    -0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
-
-    -0.5, -0.5, -0.5, 0.0, 1.0, 0.0,
-    0.5, -0.5, -0.5, 0.0, 1.0, 0.0,
-    -0.5, -0.5, 0.5, 0.0, 1.0, 0.0,
-    -0.5, -0.5, 0.5, 0.0, 1.0, 0.0,
-    0.5, -0.5, -0.5, 0.0, 1.0, 0.0,
-    0.5, -0.5, 0.5, 0.0, 1.0, 0.0,
-
-    0.5, 0.5, 0.5, 0.0, 0.0, -1.0,
-    -0.5, 0.5, 0.5, 0.0, 0.0, -1.0,
-    0.5, -0.5, 0.5, 0.0, 0.0, -1.0,
-    0.5, -0.5, 0.5, 0.0, 0.0, -1.0,
-    -0.5, 0.5, 0.5, 0.0, 0.0, -1.0,
-    -0.5, -0.5, 0.5, 0.0, 0.0, -1.0,
-
-    0.5, -0.5, -0.5, 0.0, 0.0, 1.0,
-    -0.5, -0.5, -0.5, 0.0, 0.0, 1.0,
-    0.5, 0.5, -0.5, 0.0, 0.0, 1.0,
-    0.5, 0.5, -0.5, 0.0, 0.0, 1.0,
-    -0.5, -0.5, -0.5, 0.0, 0.0, 1.0,
-    -0.5, 0.5, -0.5, 0.0, 0.0, 1.0
-]
-
-
-var gCubeVertexData: [GLfloat] = [
-    // Data layout for each line below is:
-    // positionX, positionY, positionZ,     normalX, normalY, normalZ,
-     0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
-     0.5, 0.5, -0.5, 1.0, 0.0, 0.0,
-     0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
-     0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
-     0.5, 0.5, -0.5, 1.0, 0.0, 0.0,
-     0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
-
-     0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
-    -0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
-     0.5, 0.5, 0.5, 0.0, 1.0, 0.0,
-     0.5, 0.5, 0.5, 0.0, 1.0, 0.0,
-    -0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
-    -0.5, 0.5, 0.5, 0.0, 1.0, 0.0,
-
-    -0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
-    -0.5, -0.5, -0.5, -1.0, 0.0, 0.0,
-    -0.5, 0.5, 0.5, -1.0, 0.0, 0.0,
-    -0.5, 0.5, 0.5, -1.0, 0.0, 0.0,
-    -0.5, -0.5, -0.5, -1.0, 0.0, 0.0,
-    -0.5, -0.5, 0.5, -1.0, 0.0, 0.0,
-
-    -0.5, -0.5, -0.5, 0.0, -1.0, 0.0,
-     0.5, -0.5, -0.5, 0.0, -1.0, 0.0,
-    -0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
-    -0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
-     0.5, -0.5, -0.5, 0.0, -1.0, 0.0,
-     0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
-
-     0.5, 0.5, 0.5, 0.0, 0.0, 1.0,
-    -0.5, 0.5, 0.5, 0.0, 0.0, 1.0,
-     0.5, -0.5, 0.5, 0.0, 0.0, 1.0,
-     0.5, -0.5, 0.5, 0.0, 0.0, 1.0,
-    -0.5, 0.5, 0.5, 0.0, 0.0, 1.0,
-    -0.5, -0.5, 0.5, 0.0, 0.0, 1.0,
-
-     0.5, -0.5, -0.5, 0.0, 0.0, -1.0,
-    -0.5, -0.5, -0.5, 0.0, 0.0, -1.0,
-     0.5, 0.5, -0.5, 0.0, 0.0, -1.0,
-     0.5, 0.5, -0.5, 0.0, 0.0, -1.0,
-    -0.5, -0.5, -0.5, 0.0, 0.0, -1.0,
-    -0.5, 0.5, -0.5, 0.0, 0.0, -1.0
-]
