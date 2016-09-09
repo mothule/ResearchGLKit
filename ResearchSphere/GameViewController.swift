@@ -27,7 +27,7 @@ class GameViewController: GLKViewController {
 
     var context: EAGLContext? = nil
     var effect: GLKBaseEffect? = nil
-    
+
     var textureInfo: GLKTextureInfo?
 
 
@@ -52,7 +52,7 @@ class GameViewController: GLKViewController {
         let view = self.view as! GLKView
         view.context = self.context!
         view.drawableDepthFormat = .Format24
-        
+
 
         self.setupGL()
 
@@ -97,7 +97,7 @@ class GameViewController: GLKViewController {
         }
 
         // 頂点情報の設定
-        let strideSize:Int32 = Int32(sizeof(GLfloat) * 5)
+        let strideSize: Int32 = Int32(sizeof(GLfloat) * 5)
         // XYZ座標
         glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue))
         glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), strideSize, BUFFER_OFFSET(0))
@@ -112,7 +112,7 @@ class GameViewController: GLKViewController {
         EAGLContext.setCurrentContext(self.context)
 
         if let _ = self.textureInfo {
-            var name:GLuint = self.textureInfo!.name
+            var name: GLuint = self.textureInfo!.name
             glDeleteTextures(1, &name)
         }
         glDeleteBuffers(1, &vertexBuffer)
@@ -125,17 +125,17 @@ class GameViewController: GLKViewController {
 
     func update() {
         let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
-        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(50.0), aspect, 0.01, 50.0)
+        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(70.0), aspect, 0.01, 50.0)
 
         self.effect?.transform.projectionMatrix = projectionMatrix
 
         self.effect?.texture2d0.enabled = GLboolean(GL_TRUE)
         self.effect?.texture2d0.name = textureInfo!.name
-        
+
         var baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 0.0)
-        baseModelViewMatrix = GLKMatrix4RotateWithVector3(baseModelViewMatrix, rotationYaw, GLKVector3Make(0,1,0))
+        baseModelViewMatrix = GLKMatrix4RotateWithVector3(baseModelViewMatrix, rotationYaw, GLKVector3Make(0, 1, 0))
         baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, rotationPitch, cosf(rotationYaw), 0.0, sinf(rotationYaw) )
-        
+
         // Compute the model view matrix for the object rendered with GLKit
         var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 0.0)
 //        modelViewMatrix = GLKMatrix4Scale(modelViewMatrix, 1.0, 1.0, 1.0)
@@ -143,11 +143,11 @@ class GameViewController: GLKViewController {
         self.effect?.transform.modelviewMatrix = modelViewMatrix
 
 
-        
+
         rotationYaw += Float(self.timeSinceLastUpdate * Double(0.1))
         rotationYaw += Float(self.timeSinceLastUpdate * Double(rotationVelocityYaw))
         rotationPitch += Float(self.timeSinceLastUpdate * Double(rotationVelocityPitch))
-        
+
         rotationVelocityYaw *= 0.9
         rotationVelocityPitch *= 0.9
         if fabsf(rotationVelocityYaw) <= 0.0000001 {
@@ -172,7 +172,7 @@ class GameViewController: GLKViewController {
     }
 
 
-    
+
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         rotationVelocityYaw = 0.0
         rotationVelocityPitch = 0.0
@@ -181,22 +181,22 @@ class GameViewController: GLKViewController {
         let pos: CGPoint = touch.locationInView(self.view)
         touchPrevPoint = pos
     }
-    
+
     override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
         let touch: UITouch = touches.first! as UITouch
         let pos: CGPoint = touch.locationInView(self.view)
-        
-        
+
+
         let distanceX = sqrtf( Pow(Float(pos.x - touchPrevPoint.x) ))
         let distanceY = sqrtf( Pow(Float(pos.y - touchPrevPoint.y) ))
-        
-        
+
+
         let radianX = atanf((distanceX/2.0)/50.0) * 2.0
         rotationVelocityYaw += radianX * (touchPrevPoint.x - pos.x < 0.0 ? -1.0 : 1.0)
 
         let radianY = atanf((distanceY/2.0)/50.0) * 2.0
         rotationVelocityPitch += radianY * (touchPrevPoint.y - pos.y < 0.0 ? -1.0 : 1.0)
-        
+
         touchPrevPoint = pos
     }
 
@@ -210,62 +210,66 @@ class GameViewController: GLKViewController {
 
     class func getSphere() -> [GLfloat] {
 
-        let pi = GLfloat(M_PI)
-        let pi2 = 2.0 * pi
+        let pi2: Double = 2.0 * M_PI
         let stackSize = 32
         let vtxSize = 32
-        let maxRadius: GLfloat = 1.0
+        let maxRadius: Double = 1.0
 
         var vtxes: [GLfloat] = []
 
         for stackIdx in 0..<stackSize {
-            let r1      =  sinf(pi * (GLfloat(stackIdx    ) / GLfloat(stackSize)))
-            let h1      = -cosf(pi * (GLfloat(stackIdx    ) / GLfloat(stackSize)))
-            let r2      =  sinf(pi * (GLfloat(stackIdx + 1) / GLfloat(stackSize)))
-            let h2      = -cosf(pi * (GLfloat(stackIdx + 1) / GLfloat(stackSize)))
-            let tv1     =  sinf(pi/2.0 * (GLfloat(stackIdx  ) / GLfloat(stackSize)))
-            let tv2     =  sinf(pi/2.0 * (GLfloat(stackIdx+1) / GLfloat(stackSize)))
+            let r1      =  sin(M_PI   * (Double(stackIdx    ) / Double(stackSize)))
+            let h1      = -cos(M_PI   * (Double(stackIdx    ) / Double(stackSize)))
+            let r2      =  sin(M_PI   * (Double(stackIdx + 1) / Double(stackSize)))
+            let h2      = -cos(M_PI   * (Double(stackIdx + 1) / Double(stackSize)))
+            let tv1     =  Double(stackIdx  ) / Double(stackSize)
+            let tv2     =  Double(stackIdx+1) / Double(stackSize)
             print("現階層:\(stackIdx) 現階層の高さ:\(h1) 現階層の中心からの距離:\(r1) 次階層の高さ:\(h2) 次階層の中心からの距離:\(r2)")
 
-            let radius1 = maxRadius * r1
-            let radius2 = maxRadius * r2
+            let radius1: Double = maxRadius * r1
+            let radius2: Double = maxRadius * r2
+
+            let uStride: Double = 1.0 / Double(vtxSize)
 
             for vtxIdx in 0..<vtxSize {
-                let theta1 = pi2 * (GLfloat(vtxIdx    ) / GLfloat(vtxSize))
-                let theta2 = pi2 * (GLfloat(vtxIdx + 1) / GLfloat(vtxSize))
-                let tu1 = sinf(pi/2.0 * (GLfloat(vtxIdx) / GLfloat(vtxSize)))
-                let tu2 = sinf(pi/2.0 * (GLfloat(vtxIdx+1) / GLfloat(vtxSize)))
+                let theta1: Double = pi2 * (Double(vtxIdx    ) / Double(vtxSize))
+                let theta2: Double = pi2 * (Double(vtxIdx + 1) / Double(vtxSize))
+                let tu1: Double    = Double(vtxIdx    ) * uStride
+                let tu2: Double    = Double(vtxIdx + 1) * uStride
 
-                let x11: GLfloat = radius1 * cosf(theta1)
-                let y11: GLfloat = radius1 * sinf(theta1)
-                let u11: GLfloat = tu1
-                let v11: GLfloat = tv1
 
-                let x12: GLfloat = radius1 * cosf(theta2)
-                let y12: GLfloat = radius1 * sinf(theta2)
-                let u12: GLfloat = tu2
-                let v12: GLfloat = tv1
+                let x11: GLfloat = GLfloat(radius1 * cos(theta1))
+                let y11: GLfloat = GLfloat(radius1 * sin(theta1))
+                let u11: GLfloat = GLfloat(tu1)
+                let v11: GLfloat = GLfloat(tv1)
 
-                let x21: GLfloat = radius2 * cosf(theta1)
-                let y21: GLfloat = radius2 * sinf(theta1)
-                let u21: GLfloat = tu1
-                let v21: GLfloat = tv2
+                let x12: GLfloat = GLfloat(radius1 * cos(theta2))
+                let y12: GLfloat = GLfloat(radius1 * sin(theta2))
+                let u12: GLfloat = GLfloat(tu2)
+                let v12: GLfloat = GLfloat(tv1)
 
-                let x22: GLfloat = radius2 * cosf(theta2)
-                let y22: GLfloat = radius2 * sinf(theta2)
-                let u22: GLfloat = tu2
-                let v22: GLfloat = tv2
+                let x21: GLfloat = GLfloat(radius2 * cos(theta1))
+                let y21: GLfloat = GLfloat(radius2 * sin(theta1))
+                let u21: GLfloat = GLfloat(tu1)
+                let v21: GLfloat = GLfloat(tv2)
+
+                let x22: GLfloat = GLfloat(radius2 * cos(theta2))
+                let y22: GLfloat = GLfloat(radius2 * sin(theta2))
+                let u22: GLfloat = GLfloat(tu2)
+                let v22: GLfloat = GLfloat(tv2)
 
                 // 最初のuと最後のuで頂点間のu幅が違う
                 // は調べてない
-                vtxes += [ x11, h1, y11, u11, v11]
-                vtxes += [ x21, h2, y21, u21, v21]
-                vtxes += [ x22, h2, y22, u22, v22]
+
+
+                vtxes += [x11, GLfloat(h1), y11, u11, v11]
+                vtxes += [x21, GLfloat(h2), y21, u21, v21]
+                vtxes += [x22, GLfloat(h2), y22, u22, v22]
                 print("v1(\(x11),\(h1),\(y11), \(u11),\(v11)) v2(\(x21),\(h2),\(y21), \(u21),\(v21)) v3(\(x22),\(h2),\(y22), \(u22),\(v22))")
 
-                vtxes += [ x11, h1, y11, u11, v11]
-                vtxes += [ x22, h2, y22, u22, v22]
-                vtxes += [ x12, h1, y12, u12, v12]
+                vtxes += [ x11, GLfloat(h1), y11, u11, v11]
+                vtxes += [ x22, GLfloat(h2), y22, u22, v22]
+                vtxes += [ x12, GLfloat(h1), y12, u12, v12]
                 print("v4(\(x11),\(h1),\(y11), \(u11),\(v11)) v5(\(x22),\(h2),\(y22), \(u22),\(v22)) v6(\(x12),\(h1),\(y12), \(u12),\(v12))")
             }
         }
